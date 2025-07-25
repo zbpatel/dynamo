@@ -350,6 +350,8 @@ def setup_prefill_node(
     total_gpus: int,
     use_sglang_commands: bool,
     gpu_type: str,
+    model: str,
+    hf_home: str,
 ) -> int:
     """
     Setup the prefill node.
@@ -365,7 +367,7 @@ def setup_prefill_node(
         logging.info("Using SGLang servers. No need to setup etcd or nats")
 
     # Setup environment variables for GPU script
-    setup_env_vars_for_gpu_script(prefill_host_ip, rank, total_gpus, total_nodes, args.model, args.hf_home)
+    setup_env_vars_for_gpu_script(prefill_host_ip, rank, total_gpus, total_nodes, model, hf_home)
 
     # Use appropriate GPU script instead of generating command directly
     cmd_to_run = get_gpu_command("prefill", use_sglang_commands, gpu_type)
@@ -380,6 +382,8 @@ def setup_decode_node(
     total_gpus: int,
     use_sglang_commands: bool,
     gpu_type: str,
+    model: str,
+    hf_home: str,
 ) -> int:
     """
     Setup the decode node.
@@ -396,7 +400,7 @@ def setup_decode_node(
             raise RuntimeError("Failed to connect to etcd")
 
     # Setup environment variables for GPU script
-    setup_env_vars_for_gpu_script(decode_host_ip, rank, total_gpus, total_nodes, args.model, args.hf_home)
+    setup_env_vars_for_gpu_script(decode_host_ip, rank, total_gpus, total_nodes, model, hf_home)
 
     # Use appropriate GPU script instead of generating command directly
     cmd_to_run = get_gpu_command("decode", use_sglang_commands, gpu_type)
@@ -440,6 +444,8 @@ def main(input_args: list[str] | None = None):
             args.total_nodes * args.gpus_per_node,
             args.use_sglang_commands,
             args.gpu_type,
+            args.model,
+            args.hf_home,
         )
     else:
         setup_decode_node(
@@ -450,6 +456,8 @@ def main(input_args: list[str] | None = None):
             args.total_nodes * args.gpus_per_node,
             args.use_sglang_commands,
             args.gpu_type,
+            args.model,
+            args.hf_home,
         )
 
     logging.info(f"{args.worker_type.capitalize()} node setup complete")
