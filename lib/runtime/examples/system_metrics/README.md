@@ -189,10 +189,18 @@ ingress.add_metrics(&endpoint)?;
 
 ```bash
 # Run the system metrics example
-DYN_SYSTEM_PORT=9091 cargo run --bin system_server
+DYN_SYSTEM_ENABLED=true DYN_SYSTEM_PORT=8081 cargo run --bin system_server
 ```
+The server will start an HTTP server on the specified port (8081 in this example) that exposes the Prometheus metrics endpoint at `/metrics`.
 
-The server will start an HTTP server on the specified port (9091 in this example) that exposes the Prometheus metrics endpoint at `/metrics`.
+
+To Run an actual LLM frontend + server (aggregated example), launch both of them. By default, the frontend listens to port 8080.
+```
+python -m dynamo.frontend &
+
+DYN_SYSTEM_ENABLED=true DYN_SYSTEM_PORT=8081 python -m dynamo.vllm --model Qwen/Qwen3-0.6B --enforce-eager --no-enable-prefix-caching &
+```
+Then make curl requests to the frontend (see the [main README](../../../../README.md))
 
 ## Querying Metrics
 
@@ -200,14 +208,14 @@ Once running, you can query the metrics:
 
 ```bash
 # Get all work handler metrics
-curl http://localhost:9091/metrics | grep -E "(requests_total|request_bytes_total|response_bytes_total|errors_total|request_duration_seconds|concurrent_requests)"
+curl http://localhost:8081/metrics | grep -E "(requests_total|request_bytes_total|response_bytes_total|errors_total|request_duration_seconds|concurrent_requests)"
 
 # Get request count for specific endpoint
-curl http://localhost:9091/metrics | grep 'requests_total{endpoint="dyn_example_endpoint"}'
+curl http://localhost:8081/metrics | grep 'requests_total{endpoint="dyn_example_endpoint"}'
 
 # Get request duration histogram
-curl http://localhost:9091/metrics | grep 'request_duration_seconds'
+curl http://localhost:8081/metrics | grep 'request_duration_seconds'
 
 # Get custom system metrics
-curl http://localhost:9091/metrics | grep 'my_custom_bytes_processed_total'
+curl http://localhost:8081/metrics | grep 'my_custom_bytes_processed_total'
 ```
