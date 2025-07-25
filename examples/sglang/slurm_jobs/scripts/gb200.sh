@@ -38,11 +38,22 @@ fi
 
 echo "Mode: $mode"
 echo "Command: $cmd"
+echo "Model: $MODEL"
+if [ -n "$HF_HOME" ]; then
+    echo "HF_HOME: $HF_HOME"
+else
+    echo "HF_HOME: not set (using default)"
+fi
 
 
 # Check if required environment variables are set
 if [ -z "$HOST_IP" ]; then
     echo "Error: HOST_IP environment variable is not set"
+    exit 1
+fi
+
+if [ -z "$MODEL" ]; then
+    echo "Error: MODEL environment variable is not set"
     exit 1
 fi
 
@@ -87,8 +98,8 @@ if [ "$mode" = "prefill" ]; then
         SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1 \
         PYTHONUNBUFFERED=1 \
         python3 components/worker.py \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
-            --model-path /model/ \
+            --served-model-name $MODEL \
+            --model-path $MODEL \
             --skip-tokenizer-init \
             --trust-remote-code \
             --disaggregation-mode prefill \
@@ -138,8 +149,8 @@ if [ "$mode" = "prefill" ]; then
         SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1 \
         PYTHONUNBUFFERED=1 \
         python3 -m sglang.launch_server \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
-            --model-path /model/ \
+            --served-model-name $MODEL \
+            --model-path $MODEL \
             --trust-remote-code \
             --disaggregation-mode prefill \
             --dist-init-addr "$HOST_IP:$PORT" \
@@ -188,8 +199,8 @@ elif [ "$mode" = "decode" ]; then
         SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1 \
         PYTHONUNBUFFERED=1 \
         python3 components/decode_worker.py \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
-            --model-path /model/ \
+            --served-model-name $MODEL \
+            --model-path $MODEL \
             --skip-tokenizer-init \
             --trust-remote-code \
             --disaggregation-mode decode \
@@ -238,7 +249,8 @@ elif [ "$mode" = "decode" ]; then
         SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1 \
         PYTHONUNBUFFERED=1 \
         python3 -m sglang.launch_server \
-            --model-path /model/ \
+            --served-model-name $MODEL \
+            --model-path $MODEL \
             --trust-remote-code \
             --disaggregation-mode decode \
             --dist-init-addr "$HOST_IP:$PORT" \

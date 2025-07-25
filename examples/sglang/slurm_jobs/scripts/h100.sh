@@ -38,6 +38,12 @@ fi
 
 echo "Mode: $mode"
 echo "Command: $cmd"
+echo "Model: $MODEL"
+if [ -n "$HF_HOME" ]; then
+    echo "HF_HOME: $HF_HOME"
+else
+    echo "HF_HOME: not set (using default)"
+fi
 
 
 # Check if required environment variables are set
@@ -66,13 +72,18 @@ if [ -z "$TOTAL_NODES" ]; then
     exit 1
 fi
 
+if [ -z "$MODEL" ]; then
+    echo "Error: MODEL environment variable is not set"
+    exit 1
+fi
+
 # Construct command based on mode and cmd
 if [ "$mode" = "prefill" ]; then
     if [ "$cmd" = "dynamo" ]; then
         # H100 dynamo prefill command
         python3 components/worker.py \
-            --model-path /model/ \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
+            --model-path $MODEL \
+            --served-model-name $MODEL \
             --skip-tokenizer-init \
             --disaggregation-mode prefill \
             --disaggregation-transfer-backend nixl \
@@ -101,8 +112,8 @@ if [ "$mode" = "prefill" ]; then
     elif [ "$cmd" = "sglang" ]; then
         # H100 sglang prefill command
         python3 -m sglang.launch_server \
-            --model-path /model/ \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
+            --model-path $MODEL \
+            --served-model-name $MODEL \
             --disaggregation-transfer-backend nixl \
             --disaggregation-mode prefill \
             --dist-init-addr "$HOST_IP:$PORT" \
@@ -132,8 +143,8 @@ elif [ "$mode" = "decode" ]; then
     if [ "$cmd" = "dynamo" ]; then
         # H100 dynamo decode command
         python3 components/decode_worker.py \
-            --model-path /model/ \
-            --served-model-name deepseek-ai/DeepSeek-R1 \
+            --model-path $MODEL \
+            --served-model-name $MODEL \
             --skip-tokenizer-init \
             --disaggregation-mode decode \
             --disaggregation-transfer-backend nixl \
@@ -160,7 +171,8 @@ elif [ "$mode" = "decode" ]; then
     elif [ "$cmd" = "sglang" ]; then
         # H100 sglang decode command
         python3 -m sglang.launch_server \
-            --model-path /model/ \
+            --served-model-name $MODEL \
+            --model-path $MODEL \
             --disaggregation-transfer-backend nixl \
             --disaggregation-mode decode \
             --dist-init-addr "$HOST_IP:$PORT" \

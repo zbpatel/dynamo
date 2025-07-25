@@ -82,7 +82,8 @@ def _parse_command_line_args(args: list[str] | None = None) -> argparse.Namespac
     # Template parameters
     parser.add_argument("--job-name", default="dynamo_setup", help="SLURM job name")
     parser.add_argument("--account", required=True, help="SLURM account")
-    parser.add_argument("--model-dir", required=True, help="Model directory path")
+    parser.add_argument("--model", required=True, help="HuggingFace model name (e.g., 'deepseek-ai/DeepSeek-R1')")
+    parser.add_argument("--hf-home", help="HuggingFace cache directory (sets HF_HOME environment variable)")
     parser.add_argument("--config-dir", required=True, help="Config directory path")
     parser.add_argument("--container-image", required=True, help="Container image")
     parser.add_argument(
@@ -124,7 +125,8 @@ def main(input_args: list[str] | None = None):
         "time_limit": args.time_limit,
         "prefill_nodes": args.prefill_nodes,
         "decode_nodes": args.decode_nodes,
-        "model_dir": args.model_dir,
+        "model": args.model,
+        "hf_home": args.hf_home,
         "config_dir": args.config_dir,
         "container_image": args.container_image,
         "gpus_per_node": args.gpus_per_node,
