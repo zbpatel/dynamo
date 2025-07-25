@@ -199,6 +199,7 @@ def _parse_command_line_args(args: list[str] | None = None) -> argparse.Namespac
     parser.add_argument(
         "--hf-home",
         type=str,
+        required=True,
         help="HuggingFace cache directory (sets HF_HOME environment variable)",
     )
 
@@ -235,7 +236,7 @@ def setup_env_vars_for_gpu_script(
     total_gpus: int,
     total_nodes: int,
     model: str,
-    hf_home: str = None,
+    hf_home: str,
     port: int = DIST_INIT_PORT,
 ):
     """Setup environment variables required by GPU scripts (h100.sh, gb200.sh)"""
@@ -245,9 +246,7 @@ def setup_env_vars_for_gpu_script(
     os.environ["RANK"] = str(rank)
     os.environ["TOTAL_NODES"] = str(total_nodes)
     os.environ["MODEL"] = model
-    
-    if hf_home:
-        os.environ["HF_HOME"] = hf_home
+    os.environ["HF_HOME"] = hf_home
 
     logging.info(f"Set HOST_IP: {host_ip}")
     logging.info(f"Set PORT: {port}")
@@ -255,48 +254,45 @@ def setup_env_vars_for_gpu_script(
     logging.info(f"Set RANK: {rank}")
     logging.info(f"Set TOTAL_NODES: {total_nodes}")
     logging.info(f"Set MODEL: {model}")
-    if hf_home:
-        logging.info(f"Set HF_HOME: {hf_home}")
+    logging.info(f"Set HF_HOME: {hf_home}")
     
     # Log path accessibility information
     logging.info(f"Current working directory: {os.getcwd()}")
     logging.info(f"Current user: {os.getenv('USER', 'unknown')}")
     
-    # Check HF_HOME accessibility if specified
-    if hf_home:
-        hf_path = Path(hf_home)
-        if hf_path.exists():
-            logging.info(f"HF_HOME path exists: {hf_home}")
-            logging.info(f"HF_HOME is directory: {hf_path.is_dir()}")
-            logging.info(f"HF_HOME is writable: {os.access(hf_path, os.W_OK)}")
-            logging.info(f"HF_HOME permissions: {oct(hf_path.stat().st_mode)[-3:]}")
-        else:
-            logging.warning(f"HF_HOME path does not exist: {hf_home}")
-            # Try to create the directory
-            try:
-                hf_path.mkdir(parents=True, exist_ok=True)
-                logging.info(f"Created HF_HOME directory: {hf_home}")
-            except Exception as e:
-                logging.error(f"Failed to create HF_HOME directory {hf_home}: {e}")
+    # Check HF_HOME accessibility
+    hf_path = Path(hf_home)
+    if hf_path.exists():
+        logging.info(f"HF_HOME path exists: {hf_home}")
+        logging.info(f"HF_HOME is directory: {hf_path.is_dir()}")
+        logging.info(f"HF_HOME is writable: {os.access(hf_path, os.W_OK)}")
+        logging.info(f"HF_HOME permissions: {oct(hf_path.stat().st_mode)[-3:]}")
+    else:
+        logging.warning(f"HF_HOME path does not exist: {hf_home}")
+        # Try to create the directory
+        try:
+            hf_path.mkdir(parents=True, exist_ok=True)
+            logging.info(f"Created HF_HOME directory: {hf_home}")
+        except Exception as e:
+            logging.error(f"Failed to create HF_HOME directory {hf_home}: {e}")
     
     # Log HuggingFace cache information
-    hf_cache = os.getenv('HF_HOME') or os.path.expanduser('~/.cache/huggingface')
-    logging.info(f"HuggingFace cache location: {hf_cache}")
-    hf_cache_path = Path(hf_cache)
+    logging.info(f"HuggingFace cache location: {hf_home}")
+    hf_cache_path = Path(hf_home)
     if hf_cache_path.exists():
-        logging.info(f"HuggingFace cache exists: {hf_cache}")
+        logging.info(f"HuggingFace cache exists: {hf_home}")
         logging.info(f"HuggingFace cache is writable: {os.access(hf_cache_path, os.W_OK)}")
     else:
-        logging.warning(f"HuggingFace cache does not exist: {hf_cache}")
+        logging.warning(f"HuggingFace cache does not exist: {hf_home}")
         try:
             hf_cache_path.mkdir(parents=True, exist_ok=True)
-            logging.info(f"Created HuggingFace cache directory: {hf_cache}")
+            logging.info(f"Created HuggingFace cache directory: {hf_home}")
         except Exception as e:
-            logging.error(f"Failed to create HuggingFace cache directory {hf_cache}: {e}")
+            logging.error(f"Failed to create HuggingFace cache directory {hf_home}: {e}")
     
     # Log model accessibility (this will be checked when the model is actually loaded)
     logging.info(f"Model will be loaded from: {model}")
-    logging.info(f"Model loading will use cache at: {os.getenv('HF_HOME', 'default location')}")
+    logging.info(f"Model loading will use cache at: {hf_home}")
 
 
 def get_gpu_command(worker_type: str, use_sglang_commands: bool, gpu_type: str) -> str:
@@ -433,10 +429,7 @@ def main(input_args: list[str] | None = None):
     logging.info(f"Rank: {args.rank}")
     logging.info(f"Use SGLang commands: {args.use_sglang_commands}")
     logging.info(f"Model: {args.model}")
-    if args.hf_home:
-        logging.info(f"HF_HOME: {args.hf_home}")
-    else:
-        logging.info("HF_HOME: not specified (using default)")
+    logging.info(f"HF_HOME: {args.hf_home}")
 
     setup_env(args.prefill_host_ip)
     if args.worker_type == "prefill":

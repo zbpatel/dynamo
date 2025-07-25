@@ -83,7 +83,7 @@ def _parse_command_line_args(args: list[str] | None = None) -> argparse.Namespac
     parser.add_argument("--job-name", default="dynamo_setup", help="SLURM job name")
     parser.add_argument("--account", required=True, help="SLURM account")
     parser.add_argument("--model", required=True, help="HuggingFace model name (e.g., 'deepseek-ai/DeepSeek-R1')")
-    parser.add_argument("--hf-home", help="HuggingFace cache directory (sets HF_HOME environment variable)")
+    parser.add_argument("--hf-home", required=True, help="HuggingFace cache directory (sets HF_HOME environment variable)")
     parser.add_argument("--config-dir", required=True, help="Config directory path")
     parser.add_argument("--container-image", required=True, help="Container image")
     parser.add_argument(
